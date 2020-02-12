@@ -12,10 +12,10 @@ func main() {
 	app := &cli.App{
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "tags-to-post",
-				Aliases:  []string{"tags-list"},
+				Name:     "tags",
+				Aliases:  []string{"t"},
 				Usage:    "JSON struct of tags to post. Uses the format { { [directories], [tags] },  }",
-				EnvVars:  []string{"TYG_TAG_LIST"},
+				EnvVars:  []string{"TYG_TAGS"},
 				FilePath: "/etc/tag-your-git/tags.json", // Recommended to use a docker image
 			},
 			&cli.StringFlag{
@@ -47,7 +47,7 @@ func main() {
 			},
 			{
 				Name:  "listen",
-				Usage: "Listen for incoming webhooks to process + post tags according to (--tags, ) specified",
+				Usage: "Listen for incoming webhooks to process + post tags according to (--tags, /etc/tag-your-git/tags.json, TYG_TAGS) specified",
 				Action: func(c *cli.Context) error {
 					//TODO:
 
