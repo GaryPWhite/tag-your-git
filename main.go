@@ -1,16 +1,37 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	listener "github.com/garypwhite/tag-your-git/pkg/listener"
+	github "github.com/google/go-github/github"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/oauth2"
 )
+
+func makeClient(url, apikey string) (*github.Client, error) {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: apikey},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	if len(url) == 0 {
+		return github.NewEnterpriseClient(url, url, tc) // use default client (nil)
+	}
+	return github.NewClient(tc), nil
+}
 
 func main() {
 	app := &cli.App{
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "enterprise-URL",
+				Aliases: []string{"enterprise-url"},
+				EnvVars: []string{"TYG_ENTERPRISE_URL"},
+			},
 			&cli.StringFlag{
 				Name:     "tags",
 				Aliases:  []string{"t"},
@@ -49,10 +70,24 @@ func main() {
 				Name:  "listen",
 				Usage: "Listen for incoming webhooks to process + post tags according to (--tags, /etc/tag-your-git/tags.json, TYG_TAGS) specified",
 				Action: func(c *cli.Context) error {
-					//TODO:
-
-					return nil
+					// use CLI context to make client
+					githubClient, err := makeClient(c.String("enterprise-URL"), c.String("git-api-key"))
+					if err != nil {
+						return err
+					}
+					listener := pkg.Listener{
+						Client: githubClient,
+						SecretToken: []byte(c.String("webhook-secret-key"))
+					}
+					return listener.Start()
 				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "webhook-secret-key",
+						Usage: "secret provided from GitHub webhook"
+						EnvVars: "TYG_WEBHOOK_SECRET_KEY"
+					}
+				}
 			},
 		},
 	}
