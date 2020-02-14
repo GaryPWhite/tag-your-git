@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	listener "github.com/garypwhite/tag-your-git/pkg/listener"
+	pkg "github.com/garypwhite/tag-your-git/pkg/listener"
 	github "github.com/google/go-github/github"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
@@ -35,7 +35,7 @@ func main() {
 			&cli.StringFlag{
 				Name:     "tags",
 				Aliases:  []string{"t"},
-				Usage:    "JSON struct of tags to post. Uses the format { { [directories], [tags] },  }",
+				Usage:    "JSON struct of tags to post. Uses the format [ { [patterns], [tags] } ]",
 				EnvVars:  []string{"TYG_TAGS"},
 				FilePath: "/etc/tag-your-git/tags.json", // Recommended to use a docker image
 			},
@@ -76,18 +76,18 @@ func main() {
 						return err
 					}
 					listener := pkg.Listener{
-						Client: githubClient,
-						SecretToken: []byte(c.String("webhook-secret-key"))
+						Client:    githubClient,
+						SecretKey: []byte(c.String("webhook-secret-key")),
 					}
 					return listener.Start()
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name: "webhook-secret-key",
-						Usage: "secret provided from GitHub webhook"
-						EnvVars: "TYG_WEBHOOK_SECRET_KEY"
-					}
-				}
+						Name:    "webhook-secret-key",
+						Usage:   "secret provided from GitHub webhook",
+						EnvVars: []string{"TYG_WEBHOOK_SECRET_KEY"},
+					},
+				},
 			},
 		},
 	}

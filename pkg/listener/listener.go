@@ -27,13 +27,13 @@ func (l Listener) Start() error {
 		fmt.Fprint(w, "Hello, world!")
 		payload, err := github.ValidatePayload(r, l.SecretKey)
 		if err != nil {
-			fmt.Errorf("Failed to parse payload: %+v", err)
+			fmt.Printf("ERROR: Failed to parse payload: %+v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "Could not parse payload")
 		}
 		event, err := github.ParseWebHook(github.WebHookType(r), payload)
 		if err != nil {
-			fmt.Errorf("Failed to parse payload: %+v", err)
+			fmt.Printf("ERROR: Failed to parse payload: %+v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "Could not parse payload")
 		}
@@ -52,7 +52,7 @@ func (l Listener) Start() error {
 func (l Listener) processPullRequestEvent(event *github.PullRequestEvent) error {
 	switch event.GetAction() {
 	case "opened":
-	case "edited":
+	case "edited": // add tags as needed to the PR
 		// get files from pull request
 		pr := event.GetPullRequest()
 		prRepo := event.GetRepo()
@@ -64,23 +64,28 @@ func (l Listener) processPullRequestEvent(event *github.PullRequestEvent) error 
 			&github.ListOptions{PerPage: 3000},
 		)
 		if err != nil {
-			fmt.Errorf("failed to fetch Pull Request")
+			fmt.Println("ERROR: Failed to fetch Pull Request")
 			return err
 		}
+		tagList := []string{}
 		for _, tagMatch := range l.TagMapping {
 			for _, commitFile := range files {
 				if tagMatch.Match(*commitFile.Filename) {
 					// if file matches, we post back to PR with the appropriate label(s)
-					l.Client.Issues.AddLabelsToIssue(
-						context.Background(),
-						*prRepo.Owner.Name,
-						*prRepo.Name,
-						*pr.Number,
-						tagMatch.GetTags(),
-					)
+					for _, tag := range tagMatch.GetTags() {
+						tagList = append(tagList, tag)
+					}
 				}
 			}
 		}
+		// after finding all appropriate tags, post them to PR
+		l.Client.Issues.AddLabelsToIssue(
+			context.Background(),
+			*prRepo.Owner.Name,
+			*prRepo.Name,
+			*pr.Number,
+			tagList,
+		) // here you might notice that t-y-g doesn't care about duplicates. Waiting to see if that's an issue or not with the API.
 		break
 	default: // do nothing
 		return nil
