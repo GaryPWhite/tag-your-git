@@ -90,6 +90,14 @@ func main() {
 				},
 			},
 		},
+		Name:    "tag-your-git (tyg)",
+		Version: "v0.1.0",
+		Authors: []*cli.Author{
+			&cli.Author{
+				Name:  "Gary White Jr.",
+				Email: "garypwhite@github",
+			},
+		},
 	}
 	err := app.Run(os.Args)
 	if err != nil {
