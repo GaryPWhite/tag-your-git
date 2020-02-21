@@ -18,7 +18,7 @@ func makeClient(url, apikey string) (*github.Client, error) {
 		&oauth2.Token{AccessToken: apikey},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	if len(url) == 0 {
+	if len(url) != 0 {
 		return github.NewEnterpriseClient(url, url, tc) // use default client (nil)
 	}
 	return github.NewClient(tc), nil
