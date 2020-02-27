@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	tagger "github.com/garypwhite/tag-your-git/pkg/tagger"
 	tagmatcher "github.com/garypwhite/tag-your-git/pkg/tagmatcher"
@@ -40,6 +43,20 @@ func makeTagger(enterpriseURL, apikey, tagsJSON string) (*tagger.Tagger, error) 
 	return &tagger, nil
 }
 
+func getPullRequestDetails(prURL string) (owner, repo string, pullRequestNumber int, err error) {
+	// assuming a url with trailing ..../owner/repo/pull/number....
+	splitStrings := strings.Split(strings.Trim(prURL, "/"), "/")
+	lenStrings := len(splitStrings)
+	if lenStrings < 4 { // sanity check -- even partial URL will have at least 4
+		err = fmt.Errorf("Invalid PR input, should be like https://github.com/garypwhite/tag-your-git/pull/10, got %s", prURL)
+		return
+	}
+	owner = splitStrings[lenStrings-4]
+	repo = splitStrings[lenStrings-3]
+	pullRequestNumber, err = strconv.Atoi(splitStrings[lenStrings-1])
+	return
+}
+
 func main() {
 	app := &cli.App{
 		Flags: []cli.Flag{
@@ -72,8 +89,17 @@ func main() {
 					if err != nil {
 						return err
 					}
-
-					return tagger.PostTagsToPullRequest(nil)
+					owner, repo, pullRequestNumber, err := getPullRequestDetails(c.String("pull-request"))
+					pr, _, err := tagger.Client.PullRequests.Get(
+						context.Background(),
+						owner,
+						repo,
+						pullRequestNumber,
+					)
+					if err != nil {
+						return err
+					}
+					return tagger.PostTagsToPullRequest(pr)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
