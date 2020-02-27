@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
-	pkg "github.com/garypwhite/tag-your-git/pkg/listener"
+	tagger "github.com/garypwhite/tag-your-git/pkg/tagger"
+	tagmatcher "github.com/garypwhite/tag-your-git/pkg/tagmatcher"
 	github "github.com/google/go-github/github"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
@@ -22,6 +22,22 @@ func makeClient(url, apikey string) (*github.Client, error) {
 		return github.NewEnterpriseClient(url, url, tc) // use default client (nil)
 	}
 	return github.NewClient(tc), nil
+}
+
+func makeTagger(enterpriseURL, apikey, tagsJSON string) (*tagger.Tagger, error) {
+	githubClient, err := makeClient(enterpriseURL, apikey)
+	if err != nil {
+		return nil, err
+	}
+	mapping, err := tagmatcher.Unmarshal([]byte(tagsJSON))
+	if err != nil {
+		return nil, err
+	}
+	tagger := tagger.Tagger{
+		Client:     githubClient,
+		TagMapping: mapping,
+	}
+	return &tagger, nil
 }
 
 func main() {
@@ -52,9 +68,12 @@ func main() {
 				Name:  "tag",
 				Usage: "Tag one Pull Request (--pr, --pull-request) with a specified tags JSON array (--tags, --t)",
 				Action: func(c *cli.Context) error {
-					//TODO: Call Git API, after figuring out arguments
-					fmt.Printf("nothing yet")
-					return nil
+					tagger, err := makeTagger(c.String("enterprise-URL"), c.String("git-api-key"), c.String("tags"))
+					if err != nil {
+						return err
+					}
+
+					return tagger.PostTagsToPullRequest(nil)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -71,15 +90,12 @@ func main() {
 				Usage: "Listen for incoming webhooks to process + post tags according to (--tags, /etc/tag-your-git/tags.json, TYG_TAGS) specified",
 				Action: func(c *cli.Context) error {
 					// use CLI context to make client
-					githubClient, err := makeClient(c.String("enterprise-URL"), c.String("git-api-key"))
+					tagger, err := makeTagger(c.String("enterprise-URL"), c.String("git-api-key"), c.String("tags"))
 					if err != nil {
 						return err
 					}
-					listener := pkg.Listener{
-						Client:    githubClient,
-						SecretKey: []byte(c.String("webhook-secret-key")),
-					}
-					return listener.Start()
+					secretKey := []byte(c.String("webhook-secret-key"))
+					return tagger.Listen(secretKey)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{

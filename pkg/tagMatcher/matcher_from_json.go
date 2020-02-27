@@ -1,4 +1,4 @@
-package pkg
+package tagmatcher
 
 import (
 	"encoding/json"
