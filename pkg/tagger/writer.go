@@ -18,7 +18,7 @@ func (t Tagger) PostTagsToPullRequest(pr *github.PullRequest) error {
 		&github.ListOptions{PerPage: 3000},
 	)
 	if err != nil {
-		fmt.Println("ERROR: Failed to fetch Pull Request")
+		fmt.Println("ERROR: Failed to fetch Pull Request files")
 		return err
 	}
 	tagList := []string{}
