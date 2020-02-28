@@ -82,15 +82,15 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "tag",
-				Usage: "Tag one Pull Request (--pr, --pull-request) with a specified tags JSON array (--tags, --t)",
+				Name:  "label",
+				Usage: "label one Pull Request (-pr, -pull-request) with a specified tags JSON array (-tags, -t)",
 				Action: func(c *cli.Context) error {
-					tagger, err := makeTagger(c.String("enterprise-URL"), c.String("git-api-key"), c.String("tags"))
+					tc, err := makeTagger(c.String("enterprise-URL"), c.String("git-api-key"), c.String("tags"))
 					if err != nil {
 						return err
 					}
-					owner, repo, pullRequestNumber, err := getPullRequestDetails(c.String("pull-request"))
-					pr, _, err := tagger.Client.PullRequests.Get(
+					owner, repo, pullRequestNumber, err := tagger.GetPullRequestDetails(c.String("pull-request"))
+					pr, _, err := tc.Client.PullRequests.Get(
 						context.Background(),
 						owner,
 						repo,
@@ -99,7 +99,7 @@ func main() {
 					if err != nil {
 						return err
 					}
-					return tagger.PostTagsToPullRequest(pr)
+					return tc.PostTagsToPullRequest(pr)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{

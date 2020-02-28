@@ -1,4 +1,4 @@
-package main
+package tagger
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func fixutures() (owner string, repo string, pullRequestID int) {
 func TestGetPullRequestDetailsNoTrailing(t *testing.T) {
 	owner, repo, pullRequestID := fixutures()
 	fullURL := fmt.Sprintf("https://github.com/%s/%s/pull/%d", owner, repo, pullRequestID)
-	cOwner, cRepo, cPullRequestID, err := getPullRequestDetails(fullURL)
+	cOwner, cRepo, cPullRequestID, err := GetPullRequestDetails(fullURL)
 	assert.Equal(t, owner, cOwner)
 	assert.Equal(t, repo, cRepo)
 	assert.Equal(t, pullRequestID, cPullRequestID)
@@ -27,7 +27,7 @@ func TestGetPullRequestDetailsNoTrailing(t *testing.T) {
 func TestGetPullRequestDetailsWithTrailing(t *testing.T) {
 	owner, repo, pullRequestID := fixutures()
 	fullURL := fmt.Sprintf("https://github.com/%s/%s/pull/%d/", owner, repo, pullRequestID)
-	cOwner, cRepo, cPullRequestID, err := getPullRequestDetails(fullURL)
+	cOwner, cRepo, cPullRequestID, err := GetPullRequestDetails(fullURL)
 	assert.Equal(t, owner, cOwner)
 	assert.Equal(t, repo, cRepo)
 	assert.Equal(t, pullRequestID, cPullRequestID)
@@ -37,7 +37,7 @@ func TestGetPullRequestDetailsWithTrailing(t *testing.T) {
 func TestGetPullRequestDetailsWithNoHTTPS(t *testing.T) {
 	owner, repo, pullRequestID := fixutures()
 	fullURL := fmt.Sprintf("github.com/%s/%s/pull/%d/", owner, repo, pullRequestID)
-	cOwner, cRepo, cPullRequestID, err := getPullRequestDetails(fullURL)
+	cOwner, cRepo, cPullRequestID, err := GetPullRequestDetails(fullURL)
 	assert.Equal(t, owner, cOwner)
 	assert.Equal(t, repo, cRepo)
 	assert.Equal(t, pullRequestID, cPullRequestID)
@@ -47,7 +47,7 @@ func TestGetPullRequestDetailsWithNoHTTPS(t *testing.T) {
 func TestGetPullRequestDetailsWithSSHPrefix(t *testing.T) {
 	owner, repo, pullRequestID := fixutures()
 	fullURL := fmt.Sprintf("ssh://github.com/%s/%s/pull/%d/", owner, repo, pullRequestID)
-	cOwner, cRepo, cPullRequestID, err := getPullRequestDetails(fullURL)
+	cOwner, cRepo, cPullRequestID, err := GetPullRequestDetails(fullURL)
 	assert.Equal(t, owner, cOwner)
 	assert.Equal(t, repo, cRepo)
 	assert.Equal(t, pullRequestID, cPullRequestID)
@@ -57,7 +57,7 @@ func TestGetPullRequestDetailsWithSSHPrefix(t *testing.T) {
 func TestGetPullRequestDetailsWithGitPrefix(t *testing.T) {
 	owner, repo, pullRequestID := fixutures()
 	fullURL := fmt.Sprintf("git://github.com/%s/%s/pull/%d/", owner, repo, pullRequestID)
-	cOwner, cRepo, cPullRequestID, err := getPullRequestDetails(fullURL)
+	cOwner, cRepo, cPullRequestID, err := GetPullRequestDetails(fullURL)
 	assert.Equal(t, owner, cOwner)
 	assert.Equal(t, repo, cRepo)
 	assert.Equal(t, pullRequestID, cPullRequestID)
@@ -65,11 +65,11 @@ func TestGetPullRequestDetailsWithGitPrefix(t *testing.T) {
 }
 
 func TestErrorOnGarbageInput(t *testing.T) {
-	_, _, _, err := getPullRequestDetails("heyo this is a bunch of CRUSJKDHJSAIUHDAISJDKLFJLDKJLJF no sasdflklsjah!JKLSD/.12,./,/3.4,/23,./4,23er7d867c78scy bjkn434n 9y89y3r ")
+	_, _, _, err := GetPullRequestDetails("heyo this is a bunch of CRUSJKDHJSAIUHDAISJDKLFJLDKJLJF no sasdflklsjah!JKLSD/.12,./,/3.4,/23,./4,23er7d867c78scy bjkn434n 9y89y3r ")
 	assert.NotEmpty(t, err)
 }
 
 func TestErrorOnEmptyInput(t *testing.T) {
-	_, _, _, err := getPullRequestDetails("")
+	_, _, _, err := GetPullRequestDetails("")
 	assert.NotEmpty(t, err)
 }
