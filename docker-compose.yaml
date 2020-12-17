@@ -5,7 +5,7 @@ services:
   tag-your-git:
     image: garypwhite/tag-your-git
     build:
-      dockerfile: docker/dockerfile
+      dockerfile: dockerfile
       context: .
     ports:
       - 8080:8080
