@@ -1,0 +1,11 @@
+version: "3.8"
+
+# Define the Docker Compose services that are available to build and run.
+services:
+  tag-your-git:
+    image: garypwhite/tag-your-git
+    build:
+      dockerfile: docker/dockerfile
+      context: .
+    ports:
+      - 8080:8080
